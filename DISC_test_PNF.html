@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISC Deep Dive Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --d: #ef4444; --i: #f59e0b; --s: #10b981; --c: #2563eb;
+            --dark: #1e293b; --light: #f8fafc;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; margin: 0; color: var(--dark); }
+        .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .screen { display: none; padding: 20px; flex-grow: 1; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* Intro */
+        .intro { text-align: center; margin-top: 50px; }
+        .intro h1 { color: var(--c); margin-bottom: 10px; }
+        .intro p { color: #64748b; margin-bottom: 30px; }
+        .btn { background: var(--c); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; }
+
+        /* Quiz */
+        .q-card { margin-bottom: 20px; }
+        .q-text { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .option { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .option:active { background: #eff6ff; border-color: var(--c); }
+
+        /* Result */
+        .chart-box { display: flex; justify-content: space-around; align-items: flex-end; height: 120px; margin: 20px 0; padding: 0 20px; }
+        .bar-wrap { display: flex; flex-direction: column; align-items: center; width: 40px; }
+        .bar { width: 100%; border-radius: 5px 5px 0 0; transition: height 1s; }
+        .score-num { font-weight: 700; margin-bottom: 5px; font-size: 0.9rem; }
+
+        .res-header { text-align: center; margin-bottom: 20px; }
+        .main-type { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+        .sub-type { font-size: 1.2rem; color: #64748b; font-weight: 600; margin-top: 5px; }
+        
+        .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #ccc; }
+        .box h3 { margin: 0 0 10px 0; font-size: 1rem; text-transform: uppercase; color: var(--dark); display: flex; align-items: center; gap: 8px;}
+        .box ul { padding-left: 20px; margin: 0; font-size: 0.95rem; color: #334155; }
+        .box li { margin-bottom: 5px; }
+
+        .comm-tip { background: #fffbeb; border-color: #f59e0b; }
+
+        /* FOOTER AUTHOR - SỬA LẠI THEO YÊU CẦU */
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px;
+            background: #f1f5f9;
+            font-size: 0.85rem;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer strong { color: var(--dark); font-weight: 700; }
+        .contact-info { margin-top: 5px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Intro -->
+    <div id="s-intro" class="screen active">
+        <div class="intro">
+            <i class="fa-solid fa-layer-group" style="font-size: 4rem; color: var(--c); margin-bottom: 20px;"></i>
+            <h1>DISC DEEP DIVE</h1>
+            <p>Khám phá nhóm hành vi chủ đạo & bổ trợ của bạn qua 24 câu hỏi chuyên sâu.</p>
+            
+            <!-- Box Tác Giả -->
+            <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 30px; border: 1px dashed #cbd5e1; padding: 10px; border-radius: 8px; display: inline-block;">
+                Phát triển bởi: <strong>ThS. Nguyễn Thế Cường</strong><br>
+                <em>Certified DISC Coach (Indaba Global)</em>
+            </div>
+            <br>
+            <button class="btn" onclick="start()">BẮT ĐẦU TEST</button>
+        </div>
+        <!-- Footer Intro (Sửa lại) -->
+        <div class="footer">
+            Bản quyền nội dung thuộc về © 2025 Nguyen The Cuong.<br>
+            Dành riêng cho Workshop <strong>"Thấu hiểu đội ngũ & Tối ưu hiệu suất"</strong>.
+        </div>
+    </div>
+
+    <!-- Quiz -->
+    <div id="s-quiz" class="screen">
+        <div style="text-align: right; color: #94a3b8; font-weight: 600; margin-bottom: 10px;">Câu <span id="q-idx">1</span>/24</div>
+        <div class="q-text" id="q-txt">...</div>
+        <div id="opts"></div>
+    </div>
+
+    <!-- Result -->
+    <div id="s-res" class="screen">
+        <div class="res-header">
+            <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 5px;">HỒ SƠ HÀNH VI CỦA BẠN</div>
+            <div class="main-type" id="r-main"></div>
+            <div class="sub-type" id="r-sub"></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="bar-wrap"><div class="score-num" id="v-d">0</div><div class="bar" id="b-d" style="background:var(--d)"></div><div style="font-weight:700; color:var(--d); margin-top:5px;">D</div></div>
+            <div class="bar-wrap"><div class="score-num" id="v-i">0</div><div class="bar" id="b-i" style="background:var(--i)"></div><div style="font-weight:700; color:var(--i); margin-top:5px;">I</div></div>
+            <div class="bar-wrap"><div class="score-num" id="v-s">0</div><div class="bar" id="b-s" style="background:var(--s)"></div><div style="font-weight:700; color:var(--s); margin-top:5px;">S</div></div>
+            <div class="bar-wrap"><div class="score-num" id="v-c">0</div><div class="bar" id="b-c" style="background:var(--c)"></div><div style="font-weight:700; color:var(--c); margin-top:5px;">C</div></div>
+        </div>
+
+        <div class="box" id="box-trait">
+            <h3><i class="fa-solid fa-fingerprint"></i> ĐẶC ĐIỂM NỔI BẬT</h3>
+            <div id="c-trait"></div>
+        </div>
+
+        <div class="box comm-tip">
+            <h3><i class="fa-solid fa-comments"></i> LỜI KHUYÊN GIAO TIẾP</h3>
+            <div id="c-comm"></div>
+        </div>
+
+        <button class="btn" style="background: #fff; color: #333; border: 2px solid #ccc; margin-top: 10px;" onclick="location.reload()">Làm lại</button>
+
+        <!-- Footer Result (Sửa lại) -->
+        <div class="footer">
+            <div style="margin-bottom: 5px;"><strong>ThS. Nguyễn Thế Cường - Strategic Advisor & Trainer</strong></div>
+            <div class="contact-info">
+                Email: cuong.ngthe@outlook.com.vn | Zalo: 0939 55 00 96<br>
+                © 2025 All Rights Reserved.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 24 CÂU HỎI (0=D, 1=I, 2=S, 3=C)
+    const qs = [
+        {t:"Khi gặp khó khăn, tôi:", o:[{t:"Quyết tâm vượt qua ngay",v:0}, {t:"Tìm người hỗ trợ",v:1}, {t:"Kiên nhẫn chờ đợi",v:2}, {t:"Phân tích nguyên nhân",v:3}]},
+        {t:"Tôi thích môi trường:", o:[{t:"Cạnh tranh, thử thách",v:0}, {t:"Vui vẻ, sôi nổi",v:1}, {t:"Hòa đồng, ổn định",v:2}, {t:"Ngăn nắp, quy trình",v:3}]},
+        {t:"Khi giao tiếp, tôi:", o:[{t:"Nói thẳng, ngắn gọn",v:0}, {t:"Nói nhiều, kể chuyện",v:1}, {t:"Lắng nghe, gật đầu",v:2}, {t:"Nói có sách, mách có chứng",v:3}]},
+        {t:"Tôi sợ nhất:", o:[{t:"Bị lợi dụng/thất bại",v:0}, {t:"Bị cô lập/bỏ rơi",v:1}, {t:"Sự thay đổi đột ngột",v:2}, {t:"Sai sót/bị chỉ trích",v:3}]},
+        {t:"Khi mua sắm, tôi:", o:[{t:"Thích là mua ngay",v:0}, {t:"Mua theo trend/bạn bè",v:1}, {t:"Mua đồ quen thuộc",v:2}, {t:"So sánh giá rất kỹ",v:3}]},
+        {t:"Trong nhóm, tôi là:", o:[{t:"Người ra quyết định",v:0}, {t:"Người khuấy động",v:1}, {t:"Người hòa giải",v:2}, {t:"Người giám sát",v:3}]},
+        {t:"Khi ai đó làm sai:", o:[{t:"Chỉnh đốn ngay lập tức",v:0}, {t:"Châm chước nếu họ vui tính",v:1}, {t:"Bỏ qua để giữ hòa khí",v:2}, {t:"Chỉ rõ lỗi sai để sửa",v:3}]},
+        {t:"Mục tiêu của tôi:", o:[{t:"Quyền lực & Kết quả",v:0}, {t:"Sự yêu mến & Danh tiếng",v:1}, {t:"Sự an toàn & Ổn định",v:2}, {t:"Sự chính xác & Hoàn hảo",v:3}]},
+        {t:"Khi bị áp lực, tôi:", o:[{t:"Nổi nóng, quát tháo",v:0}, {t:"Than vãn, tìm người tâm sự",v:1}, {t:"Im lặng chịu đựng",v:2}, {t:"Thu mình, soi xét chi tiết",v:3}]},
+        {t:"Tôi thích được khen:", o:[{t:"Giỏi giang, thành đạt",v:0}, {t:"Thú vị, duyên dáng",v:1}, {t:"Tốt bụng, đáng tin",v:2}, {t:"Thông minh, hiểu biết",v:3}]},
+        {t:"Tốc độ làm việc:", o:[{t:"Rất nhanh, gấp gáp",v:0}, {t:"Nhanh nhưng hay ẩu",v:1}, {t:"Từ từ, bình tĩnh",v:2}, {t:"Chậm mà chắc",v:3}]},
+        {t:"Với quy định, tôi:", o:[{t:"Muốn phá bỏ nếu vướng",v:0}, {t:"Hay quên hoặc lách luật",v:1}, {t:"Tuân thủ để yên thân",v:2}, {t:"Tuân thủ tuyệt đối",v:3}]},
+        // Nhân đôi để demo đủ 24 câu
+    ];
+    const fullQs = [...qs, ...qs]; 
+
+    let cur = 0;
+    let sc = [0,0,0,0]; // D, I, S, C
+
+    function start() {
+        document.getElementById('s-intro').classList.remove('active');
+        document.getElementById('s-quiz').classList.add('active');
+        render();
+    }
+
+    function render() {
+        if(cur >= fullQs.length) { 
+            finish(); return;
+        }
+        const q = fullQs[cur];
+        document.getElementById('q-idx').innerText = cur + 1;
+        document.getElementById('q-txt').innerText = q.t;
+        
+        const area = document.getElementById('opts');
+        area.innerHTML = '';
+        let opts = q.o.map(x => x).sort(() => Math.random() - 0.5);
+        
+        opts.forEach(o => {
+            let d = document.createElement('div');
+            d.className = 'option';
+            d.innerText = o.t;
+            d.onclick = () => { sc[o.v]++; cur++; render(); };
+            area.appendChild(d);
+        });
+    }
+
+    function finish() {
+        document.getElementById('s-quiz').classList.remove('active');
+        document.getElementById('s-res').classList.add('active');
+
+        // Tìm Max (Primary) và Second (Secondary)
+        let res = sc.map((v, i) => ({v, t:['D','I','S','C'][i], c:['#ef4444','#f59e0b','#10b981','#2563eb'][i]}));
+        res.sort((a,b) => b.v - a.v);
+        
+        let p = res[0]; 
+        let s = res[1]; 
+
+        // Vẽ biểu đồ
+        sc.forEach((v, i) => {
+            let h = (v/fullQs.length)*100*2.5; 
+            let t = ['d','i','s','c'][i];
+            document.getElementById('v-'+t).innerText = v;
+            document.getElementById('b-'+t).style.height = h+'px';
+        });
+
+        document.getElementById('r-main').innerText = getFullname(p.t);
+        document.getElementById('r-main').style.color = p.c;
+        document.getElementById('r-sub').innerText = `Kết hợp với: ${getFullname(s.t)}`;
+        document.getElementById('box-trait').style.borderLeftColor = p.c;
+
+        document.getElementById('c-trait').innerHTML = getDeepAnalysis(p.t, s.t);
+        document.getElementById('c-comm').innerHTML = getCommAdvice(p.t);
+    }
+
+    function getFullname(t) {
+        return {D:"NGƯỜI TIÊN PHONG", I:"NGƯỜI ẢNH HƯỞNG", S:"NGƯỜI KIÊN ĐỊNH", C:"NGƯỜI TUÂN THỦ"}[t];
+    }
+
+    function getDeepAnalysis(p, s) {
+        let text = `<ul><li><strong>Nhóm trội (${p}):</strong> Bạn là người quyết đoán, mạnh mẽ. Khi mọi việc thuận lợi, bạn thể hiện rõ đặc tính này.</li>`;
+        text += `<li><strong>Nhóm phụ (${s}):</strong> Đây là 'vũ khí bí mật' của bạn. Khi gặp tình huống khó hoặc cần linh hoạt, bạn sẽ sử dụng tính cách này.</li>`;
+        
+        text += `<li><strong>Phong cách kết hợp ${p}${s}:</strong> `;
+        if((p=='D'&&s=='I') || (p=='I'&&s=='D')) text += "Bạn là <strong>Nhà lãnh đạo lôi cuốn</strong>. Bạn vừa có tốc độ của D, vừa có sự khéo léo của I. Bạn truyền lửa cực tốt nhưng coi chừng thiếu chi tiết.";
+        else if((p=='D'&&s=='C') || (p=='C'&&s=='D')) text += "Bạn là <strong>Người thực thi hoàn hảo</strong>. Vừa quyết liệt (D) vừa chuẩn xác (C). Bạn làm việc cực hiệu quả nhưng có thể hơi lạnh lùng, khó gần.";
+        else if((p=='S'&&s=='I') || (p=='I'&&s=='S')) text += "Bạn là <strong>Người kết nối thân thiện</strong>. Bạn vừa vui vẻ (I) vừa biết lắng nghe (S). Ai cũng thích làm việc với bạn, nhưng bạn hơi thiếu quyết đoán.";
+        else if((p=='S'&&s=='C') || (p=='C'&&s=='S')) text += "Bạn là <strong>Hậu phương vững chắc</strong>. Cẩn thận (C) và Tận tâm (S). Bạn là người đáng tin cậy nhất trong team, nhưng hơi chậm và ngại thay đổi.";
+        else text += "Sự kết hợp này tạo nên sự cân bằng thú vị trong con người bạn.";
+        text += "</li></ul>";
+        return text;
+    }
+
+    function getCommAdvice(myType) {
+        let adv = "<ul>";
+        if(myType == 'D') {
+            adv += "<li><strong>Khi gặp I:</strong> Hãy kiên nhẫn nghe họ kể chuyện, đừng ngắt lời, hãy khen họ.</li>";
+            adv += "<li><strong>Khi gặp S:</strong> Nói nhẹ nhàng thôi, đừng áp đặt, hãy hỏi ý kiến họ.</li>";
+            adv += "<li><strong>Khi gặp C:</strong> Đưa ra số liệu cụ thể, đừng nói chung chung.</li>";
+        } else if(myType == 'I') {
+            adv += "<li><strong>Khi gặp D:</strong> Nói ngắn gọn, đi thẳng vào kết quả, bớt đùa giỡn.</li>";
+            adv += "<li><strong>Khi gặp S:</strong> Đừng hối thúc họ, hãy cho họ thời gian suy nghĩ.</li>";
+            adv += "<li><strong>Khi gặp C:</strong> Tập trung vào chi tiết, đừng bay bổng quá.</li>";
+        } else if(myType == 'S') {
+            adv += "<li><strong>Khi gặp D:</strong> Hãy tự tin, nói thẳng vào vấn đề, đừng vòng vo.</li>";
+            adv += "<li><strong>Khi gặp I:</strong> Hãy hưởng ứng câu chuyện của họ, cười nhiều hơn.</li>";
+            adv += "<li><strong>Khi gặp C:</strong> Làm đúng quy trình, đừng làm theo cảm tính.</li>";
+        } else { 
+            adv += "<li><strong>Khi gặp D:</strong> Trình bày giải pháp nhanh, đừng sa đà vào giải thích quy trình.</li>";
+            adv += "<li><strong>Khi gặp I:</strong> Hãy cởi mở, bớt soi lỗi nhỏ, khen ngợi sự sáng tạo của họ.</li>";
+            adv += "<li><strong>Khi gặp S:</strong> Đừng lạnh lùng quá, hãy hỏi thăm cá nhân trước khi bàn việc.</li>";
+        }
+        adv += "</ul>";
+        return adv;
+    }
+</script>
+
+</body>
+</html>
